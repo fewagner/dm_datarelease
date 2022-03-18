@@ -20,13 +20,13 @@ SQRT2PI = np.sqrt(2.0 * np.pi)
 
 # Construct the argument parser
 ap = argparse.ArgumentParser()
+ap.add_argument("-p", "--path", type=str, help="Path to the directory.")
 ap.add_argument("-i", "--idx_dataset", type=int, default=0, help="Index of the dataset: 0, ..., 9.")
 ap.add_argument("-w", "--which_limit", type=str, default='a', help="Which experiments: a, b, c, ab, bc, ac or abc.")
-ap.add_argument("-n", "--nmbr_gridpoints", type=int, default=30, help="Nmbr of the points used for one limit.")
+ap.add_argument("-n", "--num", type=int, default=30, help="Nmbr of the points used for one limit.")
 
 args = vars(ap.parse_args())
-i = args['i']
-num = 
+num = args['num']
 
 # ----------------------------------------
 # Functions
@@ -230,8 +230,6 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                             args=args_,
                             )
         
-        fit_results.append(res_best.x)
-        
         # print('Res best: ', res_best)
 
         # do exclusion fit
@@ -251,8 +249,6 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                  )
             
             res = minimize(nll_combined, x0=x0s, args=args_excl)
-            
-            fit_results.append(res.x)
 
             return res.fun - (res_best.fun + 1.282**2/2)  # results are negativ, this is llh_best - Z^2/2 - llh_excl l 
         
@@ -279,27 +275,25 @@ RESOLUTION = np.array([0.015, 0.005, 0.15])
 EFFICIENCY = np.array([0.8, 0.65, 0.5])
 NMBR_REPETITIONS = 10
 
-num=30
-
 data_alice = []
 data_bob = []
 data_carol = []
 
 for i in range(NMBR_REPETITIONS):
-    data_alice.append(np.loadtxt('data/alice/data_alice_{}.txt'.format(i)))
-    data_bob.append(np.loadtxt('data/bob/data_bob_{}.txt'.format(i)))
-    data_carol.append(np.loadtxt('data/carol/data_carol_{}.txt'.format(i)))
+    data_alice.append(np.loadtxt(args['path'] + 'data/alice/data_alice_{}.txt'.format(i)))
+    data_bob.append(np.loadtxt(args['path'] + 'data/bob/data_bob_{}.txt'.format(i)))
+    data_carol.append(np.loadtxt(args['path'] + 'data/carol/data_carol_{}.txt'.format(i)))
     
 grids = []
 efficiencies = []
 
-grids.append(np.loadtxt('data/alice/efficiency_alice.txt')[:,0])
-grids.append(np.loadtxt('data/bob/efficiency_bob.txt')[:,0])
-grids.append(np.loadtxt('data/carol/efficiency_carol.txt')[:,0])
+grids.append(np.loadtxt(args['path'] + 'data/alice/efficiency_alice.txt')[:,0])
+grids.append(np.loadtxt(args['path'] + 'data/bob/efficiency_bob.txt')[:,0])
+grids.append(np.loadtxt(args['path'] + 'data/carol/efficiency_carol.txt')[:,0])
 
-efficiencies.append(np.loadtxt('data/alice/efficiency_alice.txt')[:,1])
-efficiencies.append(np.loadtxt('data/bob/efficiency_bob.txt')[:,1])
-efficiencies.append(np.loadtxt('data/carol/efficiency_carol.txt')[:,1])
+efficiencies.append(np.loadtxt(args['path'] + 'data/alice/efficiency_alice.txt')[:,1])
+efficiencies.append(np.loadtxt(args['path'] + 'data/bob/efficiency_bob.txt')[:,1])
+efficiencies.append(np.loadtxt(args['path'] + 'data/carol/efficiency_carol.txt')[:,1])
 
 data_alice = np.array(data_alice)
 data_bob = np.array(data_bob)
@@ -351,8 +345,10 @@ x0_carol = np.array([0.*len(data_carol[0])/EFFICIENCY[2],  # w0
 # Do the calculation
 # ----------------------------------------
 
+i = args['idx_dataset']
+
 print('Calculate individual Limits...')
-pars_alice = np.logspace(-1.5,1,num=num)  # upper is 1
+pars_alice = np.logspace(-1.5,1,num=num)  
 pars_bob = np.logspace(-2,1,num=num)
 pars_carol = np.logspace(-0.5,2,num=num)
 
@@ -368,7 +364,7 @@ if args['which_limit'] == 'a':
                  bndss=[bnds_alice,],
                               )/EXPOSURE[0]
     
-    np.savetxt(f'data/limit/limit_a_{i}.txt', limit_alice)
+    np.savetxt(args['path'] + f'data/limit/limit_a_{i}.txt', np.array([pars_alice,limit_alice, ]).T)
 
 if args['which_limit'] == 'b':
     
@@ -382,7 +378,7 @@ if args['which_limit'] == 'b':
                  bndss=[bnds_bob,],
                             )/EXPOSURE[1]
 
-    np.savetxt(f'data/limit/limit_b_{i}.txt', limit_bob)
+    np.savetxt(args['path'] + f'data/limit/limit_b_{i}.txt', np.array([pars_bob,limit_bob, ]).T)
     
 if args['which_limit'] == 'c':
     
@@ -396,7 +392,7 @@ if args['which_limit'] == 'c':
                  bndss=[bnds_carol,],
                               )/EXPOSURE[2]
     
-    np.savetxt(f'data/limit/limit_c_{i}.txt', limit_carol)
+    np.savetxt(args['path'] + f'data/limit/limit_c_{i}.txt', np.array([pars_carol,limit_carol, ]).T)
 
 print('Calculate two-experiment Limits...')
 pars_ab = np.logspace(-2,1,num=num)
@@ -405,7 +401,7 @@ pars_bc = np.logspace(-2,2,num=num)
 
 if args['which_limit'] == 'ab':
 
-    limit_ab = get_limit(dm_pars=pars_ab, 
+    limit_ab = get_limit_lh(dm_pars=pars_ab, 
              densities=[density_alice_nb, density_bob_nb], 
              x0s=[x0_alice, x0_bob], 
              datas=[data_alice[i], data_bob[i]],
@@ -415,11 +411,11 @@ if args['which_limit'] == 'ab':
              bndss=[bnds_alice, bnds_bob],
                         )/np.sum(EXPOSURE[[0,1]])
     
-    np.savetxt(f'data/limit/limit_ab_{i}.txt', limit_ab)
+    np.savetxt(args['path'] + f'data/limit/limit_ab_{i}.txt', np.array([pars_ab,limit_ab, ]).T)
 
 if args['which_limit'] == 'ac':
     
-    limit_ac = get_limit(dm_pars=pars_ac, 
+    limit_ac = get_limit_lh(dm_pars=pars_ac, 
              densities=[density_alice_nb, density_carol_nb], 
              x0s=[x0_alice, x0_carol], 
              datas=[data_alice[i], data_carol[i]],
@@ -429,11 +425,11 @@ if args['which_limit'] == 'ac':
              bndss=[bnds_alice, bnds_carol],
                         )/np.sum(EXPOSURE[[0,2]])
     
-    np.savetxt(f'data/limit/limit_ac_{i}.txt', limit_ac)
+    np.savetxt(args['path'] + f'data/limit/limit_ac_{i}.txt', np.array([pars_ac, limit_ac, ]).T)
 
 if args['which_limit'] == 'bc':
     
-    limit_bc = get_limit(dm_pars=pars_bc, 
+    limit_bc = get_limit_lh(dm_pars=pars_bc, 
              densities=[density_bob_nb, density_carol_nb, ], 
              x0s=[x0_bob, x0_carol,], 
              datas=[data_bob[i], data_carol[i], ],
@@ -443,14 +439,14 @@ if args['which_limit'] == 'bc':
              bndss=[bnds_bob, bnds_carol],
                         )/np.sum(EXPOSURE[[1,2]])
     
-    np.savetxt(f'data/limit/limit_bc_{i}.txt', limit_bc)
+    np.savetxt(args['path'] + f'data/limit/limit_bc_{i}.txt', np.array([pars_bc, limit_bc, ]).T)
 
 print('Calculate combined Limit ...')
 pars_all = np.logspace(-2,2,num=num)
 
 if args['which_limit'] == 'abc':
 
-    limit_all = get_limit(dm_pars=pars_all, 
+    limit_all = get_limit_lh(dm_pars=pars_all, 
              densities=[density_alice_nb, density_bob_nb, density_carol_nb, ], 
              x0s=[x0_alice, x0_bob, x0_carol,], 
              datas=[data_alice[i], data_bob[i], data_carol[i], ],
@@ -460,4 +456,4 @@ if args['which_limit'] == 'abc':
              bndss=[bnds_alice, bnds_bob, bnds_carol],
                          )/np.sum(EXPOSURE)
 
-    np.savetxt(f'data/limit/limit_all_{i}.txt', limit_all)
+    np.savetxt(args['path'] + f'data/limit/limit_all_{i}.txt', np.array([pars_all, limit_all, ]).T)
