@@ -5,7 +5,7 @@ from scipy.stats import expon, norm, uniform, gamma
 from scipy import stats
 from itertools import product, chain
 import numba as nb
-from scipy.optimize import fsolve, bisect, minimize
+from scipy.optimize import fsolve, bisect, minimize, basinhopping
 import matplotlib as mpl
 from tqdm.auto import tqdm, trange
 import pdb
@@ -206,6 +206,11 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
     # combine all start values, datas and bounds into a 1D array
     x0s = [0] + list(chain.from_iterable([x0[1:] for x0 in x0s]))
     bnds = [(0, 5e100)] + list(chain.from_iterable([b[1:] for b in bndss]))
+    
+    # def print_fun(x, f, accepted):
+    #     print("at minimum %.4f accepted %d" % (f, int(accepted)))
+    # def print_fun(xk):
+    #     print(f"parameters: {xk}")
         
     # here we start with the actual limit calculation
     limit = []    
@@ -225,12 +230,12 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                  )
     
         # calculate best fit
-        res_best = minimize(nll_combined, 
-                            x0=x0s, 
-                            args=args_,
-                            )
+        # res_best = minimize(nll_combined, x0=x0s, args=args_, callback=print_fun, method='Nelder-Mead', options={'fatol': 0.01})
+        res_best = basinhopping(nll_combined, x0=x0s, minimizer_kwargs={'args': args_}), #niter=3, stepsize=10, T=100, 
+                                # callback=print_fun)
         
-        # print('Res best: ', res_best)
+        print('Res best: ', res_best)
+        print('Res best: ', res_best.x)
 
         # do exclusion fit
         def implfunc(val): 
@@ -248,14 +253,16 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                  exposures,  # exposures
                  )
             
-            res = minimize(nll_combined, x0=x0s, args=args_excl)
+            res = minimize(nll_combined, x0=x0s, args=args_excl)#, callback=print_fun, method='Nelder-Mead', options={'fatol': 0.01})
+            # res = basinhopping(nll_combined, x0=res_best.x, minimizer_kwargs={'args': args_excl}, #niter=3, stepsize=10, T=100, 
+            #                    callback=print_fun)
 
             return res.fun - (res_best.fun + 1.282**2/2)  # results are negativ, this is llh_best - Z^2/2 - llh_excl l 
         
         # pdb.set_trace()
         
         # try:
-        res_excl = bisect(implfunc, a=res_best.x[0], b=1e8, maxiter=1000)
+        res_excl = bisect(implfunc, a=res_best.x[0], b=1e9, maxiter=1000)
         limit.append(res_excl)
         # except:
         #     limit.append(np.nan)
