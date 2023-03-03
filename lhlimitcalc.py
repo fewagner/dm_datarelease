@@ -32,6 +32,7 @@ num = args['num']
 # Functions
 # ----------------------------------------
 
+# TODO distribution elements should be vectorized instead for loops
 # normal distribution
 @njit
 def pdf_normal(x, loc=0., scale=1.):
@@ -178,7 +179,7 @@ def nll_combined(pars, datas, lamb, densities, grids, eff_grid, efficiencies, si
         
         # if the signal weight is fixed, set it for all the densities
         if sig_fixed is not None:
-            pars_[0] = sig_fixed
+            pars_[0] = sig_fixed  # fixing the parameter here is probably the issue! either use Miniuit (can fix parameters) or give DM not as par but as arg
             
         # pdb.set_trace()
     
@@ -192,7 +193,7 @@ def nll_combined(pars, datas, lamb, densities, grids, eff_grid, efficiencies, si
         
         lh = densities[i](pars_, datas[i], lamb, efficiencies[i])#/exposures[i]
         nll -= np.sum(np.log(lh))
-        nu += np.trapz(y=densities[i](pars_, grids[i], lamb, eff_grid[i]), 
+        nu += np.trapz(y=densities[i](pars_, grids[i], lamb, eff_grid[i]),
                        x=grids[i])#/exposures[i]  # integrate in roi
         
     return nu + nll  # this is nu - sum(log(lh)), i.e. the negative extended log likelihood
@@ -225,7 +226,7 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                  )
     
         # calculate best fit
-        res_best = minimize(nll_combined, 
+        res_best = minimize(nll_combined, # TODO very important that this is really good!!
                             x0=x0s, 
                             args=args_,
                             )
@@ -248,14 +249,15 @@ def get_limit_lh(dm_pars, densities, x0s, datas, grids, efficiencies,
                  exposures,  # exposures
                  )
             
-            res = minimize(nll_combined, x0=x0s, args=args_excl)
+            res = minimize(nll_combined, x0=x0s, args=args_excl)  # here should be used another specific nll  # TODO here we should maybe use the best fit pars as x0!!
+            # TODO activate flag adaptive
 
             return res.fun - (res_best.fun + 1.282**2/2)  # results are negativ, this is llh_best - Z^2/2 - llh_excl l 
         
         # pdb.set_trace()
         
         # try:
-        res_excl = bisect(implfunc, a=res_best.x[0], b=1e8, maxiter=1000)
+        res_excl = bisect(implfunc, a=res_best.x[0], b=1e8, maxiter=1000)  # put b maybe to 2*best fit?? and only if this doesnt work make upper bound 10 times higher
         limit.append(res_excl)
         # except:
         #     limit.append(np.nan)
