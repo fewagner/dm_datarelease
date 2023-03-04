@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf
@@ -22,10 +16,6 @@ import sys
 
 SQRT2PI = np.sqrt(2.0 * np.pi)
 
-
-# In[2]:
-
-
 # ----------------------------------------
 # Input handling
 # ----------------------------------------
@@ -39,10 +29,6 @@ ap.add_argument("-n", "--num", type=int, default=30, help="Nmbr of the points us
 
 args = vars(ap.parse_args())
 num = args['num']
-
-
-
-# In[4]:
 
 
 # ----------------------------------------
@@ -180,7 +166,56 @@ def density_carol_nb(pars,
     return density
 
 
-# In[66]:
+def nll_combined_sigfixed(pars,
+                          datas,
+                          lamb,
+                          densities,
+                          grids,
+                          eff_grid,
+                          efficiencies,
+                          sig_fixed,
+                          bnds,
+                          npars,
+                          exposures):
+    """
+    The negative extended log likelihood.
+
+    grid: 1D array, the grid over the combined ROI of all measurements for the integration
+    eff_grid: list of 1D arrays, the efficiencies of the measurements, evaluated at the grid values,
+        set to zero outside the ROI of the measurement
+    efficiencies: list of 1D arrays, the efficiencies of the measurements, evaluated at the x values,
+        set to zero outside the ROI of the measurement
+    """
+
+    n = len(npars)  # the number of densities/measurements
+    nll = 0  # init the count variable for the likelihood
+    nu = 0  # init the count variable for the integral over the density
+
+    # loop over the measurements
+    for i in range(n):
+
+        # get the correct pars and bounds for this measurement
+        pars_ = list([sig_fixed]) + list(pars[int(np.sum(npars[:i]) - i + 1):int(np.sum(npars[:i + 1]) - i)])
+        bnds_ = list([(0, 0)]) + list(bnds[int(np.sum(npars[:i]) - i + 1):int(np.sum(npars[:i + 1]) - i)])
+        pars_ = np.array(pars_)
+        bnds_ = np.array(bnds_)
+
+        # pdb.set_trace()
+
+        # check if the parameters are within their bounds except signal
+        for p, (low, up) in zip(pars_[1:], bnds_[1:]):
+            ok, retval = inbounds(p, low, up)
+            if not ok:
+                return retval
+
+        # calculate and sum up the likelihood and the integral over the density
+
+        lh = densities[i](pars_, datas[i], lamb, efficiencies[i])  # /exposures[i]
+        nll -= np.sum(np.log(lh))
+        nu += np.trapz(y=densities[i](pars_, grids[i], lamb, eff_grid[i]),
+                       x=grids[i])  # /exposures[i]  # integrate in roi
+
+    return nu + nll  # this is nu - sum(log(lh)), i.e. the negative extended log likelihood
 
 
 def nll_combined(pars,
@@ -211,13 +246,12 @@ def nll_combined(pars,
     for i in range(n):
 
         # get the correct pars and bounds for this measurement
-        ids = int(np.sum(npars[:i]) - i + 1) 
-        ide = int(np.sum(npars[:i + 1]) - i)
-        #print(ids, ide)
-        pars_ = list([pars[0]]) + list(pars[ids:ide])
-        bnds_ = list([bnds[0]]) + list(bnds[ids:ide])
+        pars_ = list([pars[0]]) + list(pars[int(np.sum(npars[:i]) - i + 1):int(np.sum(npars[:i + 1]) - i)])
+        bnds_ = list([bnds[0]]) + list(bnds[int(np.sum(npars[:i]) - i + 1):int(np.sum(npars[:i + 1]) - i)])
         pars_ = np.array(pars_)
         bnds_ = np.array(bnds_)
+
+        # pdb.set_trace()
 
         # check if the parameters are within their bounds
         for p, (low, up) in zip(pars_, bnds_):
@@ -226,78 +260,13 @@ def nll_combined(pars,
                 return retval
 
         # calculate and sum up the likelihood and the integral over the density
-        
-        #print(pars_, datas[i][0], lamb, efficiencies[i][0])
 
         lh = densities[i](pars_, datas[i], lamb, efficiencies[i])  # /exposures[i]
         nll -= np.sum(np.log(lh))
         nu += np.trapz(y=densities[i](pars_, grids[i], lamb, eff_grid[i]),
                        x=grids[i])  # /exposures[i]  # integrate in roi
-        #print(lh[0], nu, nll)
 
     return nu + nll  # this is nu - sum(log(lh)), i.e. the negative extended log likelihood
-
-
-# In[67]:
-
-
-def nll_combined_sigfixed(pars,
-                          datas,
-                          lamb,
-                          densities,
-                          grids,
-                          eff_grid,
-                          efficiencies,
-                          sig_fixed,
-                          bnds,
-                          npars,
-                          exposures):
-    """
-    The negative extended log likelihood.
-
-    grid: 1D array, the grid over the combined ROI of all measurements for the integration
-    eff_grid: list of 1D arrays, the efficiencies of the measurements, evaluated at the grid values,
-        set to zero outside the ROI of the measurement
-    efficiencies: list of 1D arrays, the efficiencies of the measurements, evaluated at the x values,
-        set to zero outside the ROI of the measurement
-    """
-
-    n = len(npars)  # the number of densities/measurements
-    nll = 0  # init the count variable for the likelihood
-    nu = 0  # init the count variable for the integral over the density
-
-    # loop over the measurements
-    for i in range(n):
-
-        # get the correct pars and bounds for this measurement
-        ids = int(np.sum(npars[:i]) - i) 
-        ide = int(np.sum(npars[:i + 1]) - i)
-        #print(ids, ide)
-        pars_ = list([sig_fixed]) + list(pars[ids:ide])
-        bnds_ = list([(0, 1e100)]) + list(bnds[ids:ide])
-        pars_ = np.array(pars_)
-        bnds_ = np.array(bnds_)
-
-        # check if the parameters are within their bounds except signal
-        for p, (low, up) in zip(pars_, bnds_):
-            ok, retval = inbounds(p, low, up)
-            if not ok:
-                return retval
-
-        # calculate and sum up the likelihood and the integral over the density
-        
-        #print(pars_, datas[i][0], lamb, efficiencies[i][0])
-
-        lh = densities[i](pars_, datas[i], lamb, efficiencies[i])  # /exposures[i]
-        nll -= np.sum(np.log(lh))
-        nu += np.trapz(y=densities[i](pars_, grids[i], lamb, eff_grid[i]),
-                       x=grids[i])  # /exposures[i]  # integrate in roi
-        #print(lh[0], nu, nll)
-
-    return nu + nll  # this is nu - sum(log(lh)), i.e. the negative extended log likelihood
-
-
-# In[76]:
 
 
 def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
@@ -309,7 +278,7 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
                  exposures: list,  # the exposures
                  bndss: list,  # lsit of lists of tuples with bounds of all fit parameters
                  ):
-    # TODO return of this function needs to be divided by the sum of exposures
+    # return of this function needs to be divided by the sum of exposures
 
     # get the number of measurements
     npars = [len(x0) for x0 in x0s]
@@ -317,6 +286,11 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
     # combine all start values, datas and bounds into a 1D array
     x0s = [0] + list(chain.from_iterable([x0[1:] for x0 in x0s]))
     bnds = [(0, 5e100)] + list(chain.from_iterable([b[1:] for b in bndss]))
+
+    # def print_fun(x, f, accepted):
+    #     print("at minimum %.4f accepted %d" % (f, int(accepted)))
+    # def print_fun(xk):
+    #     print(f"parameters: {xk}")
 
     # here we start with the actual limit calculation
     limit = []
@@ -338,13 +312,17 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
 
         # calculate best fit
         # TODO very important that the initial best fit is really good!!
+        # res_best = minimize(nll_combined, x0=x0s, args=args_, callback=print_fun, method='Nelder-Mead', options={'adaptive': True, 'fatol': 0.01})
         res_best = basinhopping(nll_combined, x0=x0s, minimizer_kwargs={'args': args_})  # niter=3, stepsize=10, T=100,
 
-        # print('lamb: {}, pars best fit: {}'.format(p, res_best.x))
-        
+        # callback=print_fun)
+
+        # print('Res best: ', res_best.fun)
+        # print('Res best: ', res_best.x)
+
         # do exclusion fit
         def implfunc(val):
-            # the nll_combined function takes 10 arguments additionally to the parameters
+            # the nll_combined function takes 9 arguments additionally to the parameters
             args_excl = (datas,  # x
                          p,  # lamb
                          densities,
@@ -362,9 +340,14 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
                            x0=res_best.x[1:],
                            # x0=x0s[1:],
                            args=args_excl,
-                           options={'adaptive': True})
+                           options={
+                               'adaptive': True})  # , callback=print_fun, method='Nelder-Mead', options={'fatol': 0.01})
+            # res = basinhopping(nll_combined, x0=res_best.x, minimizer_kwargs={'args': args_excl}, #niter=3, stepsize=10, T=100,
+            #                    callback=print_fun)
 
             return res.fun - res_best.fun - 1.282 ** 2 / 2  # results are negativ, this is llh_best - Z^2/2 - llh_excl l
+
+        # pdb.set_trace()
 
         success = False
         b = 1e5 * res_best.x[0]
@@ -374,7 +357,7 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
             pbar.set_description(f"dm mass: {p:.2E}, best fit cs: {res_best.x[0]:.2E}, try exclusion fit: {counts}")
             counts += 1
             try:
-                # print(implfunc(res_best.x[0]), implfunc(b))
+                print(implfunc(res_best.x[0]), implfunc(b))
                 res_excl = bisect(implfunc,
                                   a=res_best.x[0],
                                   b=b,  # previously: b=1e9, maxiter=1000
@@ -385,9 +368,6 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
         limit.append(res_excl)
 
     return limit
-
-
-# In[77]:
 
 
 # ----------------------------------------
@@ -429,10 +409,6 @@ data_carol = np.array(data_carol)
 grids = np.array(grids)
 efficiencies = np.array(efficiencies)
 
-
-# In[78]:
-
-
 # ----------------------------------------
 # parameters
 # ----------------------------------------
@@ -472,10 +448,6 @@ x0_carol = np.array([0. * len(data_carol[0]) / EFFICIENCY[2],  # w0
                      0.15 * len(data_carol[0]) / EFFICIENCY[2],  # w2
                      0.1 * len(data_carol[0]) / EFFICIENCY[2],  # w3
                      ])
-
-
-# In[80]:
-
 
 # ----------------------------------------
 # Do the calculation
@@ -586,10 +558,3 @@ if args['which_limit'] == 'abc':
                              ) / np.sum(EXPOSURE)
 
     np.savetxt(args['path'] + f'data/limit/limit_all_{i}.txt', np.array([pars_all, limit_all, ]).T)
-
-
-# In[ ]:
-
-
-
-

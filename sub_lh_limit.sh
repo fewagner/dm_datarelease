@@ -1,7 +1,17 @@
 #!/bin/sh
 # execution script for SLURM cluster 
 
-for which in b
+# Calculation times are roughly (min):
+# a 10 
+# b 10 
+# c 20
+# ab 30 
+# bc 60
+# ac 60
+# abc 120
+
+
+for which in a b c ab bc ac abc
 do
   for (( idx=0; idx<=5; idx++))
   do
