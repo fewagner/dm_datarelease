@@ -331,7 +331,8 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
                          exposures,  # exposures
                          )
 
-            res = minimize(nll_combined_sigfixed, x0=res_best.x[1:],  # x0=x0s[1:],
+            res = minimize(nll_combined_sigfixed, method='Nelder-Mead',
+                           x0=res_best.x[1:],  # x0=x0s[1:],
                            args=args_excl, options={
                     'adaptive': True})  # , callback=print_fun, method='Nelder-Mead', options={'fatol': 0.01})
             # res = basinhopping(nll_combined, x0=res_best.x, minimizer_kwargs={'args': args_excl}, #niter=3, stepsize=10, T=100,
