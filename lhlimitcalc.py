@@ -11,7 +11,7 @@ from scipy.stats import expon, norm, uniform, gamma
 from scipy import stats
 from itertools import product, chain
 import numba as nb
-from scipy.optimize import fsolve, bisect, minimize, basinhopping
+from scipy.optimize import fsolve, bisect, minimize, basinhopping, brenth
 import matplotlib as mpl
 from tqdm.auto import tqdm, trange
 import pdb
@@ -338,9 +338,14 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
 
         # calculate best fit
         # TODO very important that the initial best fit is really good!!
-        res_best = basinhopping(nll_combined, x0=x0s, minimizer_kwargs={'args': args_})  # niter=3, stepsize=10, T=100,
+        # res_best = basinhopping(nll_combined, x0=x0s, minimizer_kwargs={'args': args_})  # niter=3, stepsize=10, T=100,
+        res_best = minimize(nll_combined, 
+                     method='Nelder-Mead',
+                     x0=x0s, 
+                     args=args_,
+                     options={'adaptive': True})  # niter=3, stepsize=10, T=100,
 
-        # print('lamb: {}, pars best fit: {}'.format(p, res_best.x))
+        print('\n lamb: {}, fun: {}, pars best fit: {}'.format(p, res_best.fun, res_best.x))
         
         # do exclusion fit
         def implfunc(val):
@@ -363,6 +368,8 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
                            # x0=x0s[1:],
                            args=args_excl,
                            options={'adaptive': True})
+            
+            print('lamb: {}, fun: {}, cs val: {}, pars exclusion: {}'.format(p, res.fun, val, res.x))
 
             return res.fun - res_best.fun - 1.282 ** 2 / 2  # results are negativ, this is llh_best - Z^2/2 - llh_excl l
 
@@ -370,15 +377,16 @@ def get_limit_lh(dm_pars: np.array,  # 1D array of the the DM masses
         b = 1e5 * res_best.x[0]
         counts = 0
         while not success:
-            assert counts < 10, 'Exceeded limit of tries!'
+            assert counts < 100, 'Exceeded limit of tries!'
             pbar.set_description(f"dm mass: {p:.2E}, best fit cs: {res_best.x[0]:.2E}, try exclusion fit: {counts}")
             counts += 1
             try:
                 # print(implfunc(res_best.x[0]), implfunc(b))
-                res_excl = bisect(implfunc,
+                res_excl = brenth(implfunc,
                                   a=res_best.x[0],
                                   b=b,  # previously: b=1e9, maxiter=1000
-                                  maxiter=100)
+                                  maxiter=100,
+                                  rtol=1e-4)
                 success = True
             except ValueError:
                 b *= 2

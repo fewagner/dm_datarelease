@@ -1,0 +1,47 @@
+python lhlimitcalc.py -p ./ -i 0 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 0 -w abc -n 40 
+
+python lhlimitcalc.py -p ./ -i 1 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 1 -w abc -n 40 
+
+python lhlimitcalc.py -p ./ -i 2 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 2 -w abc -n 40 
+
+python lhlimitcalc.py -p ./ -i 3 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 3 -w abc -n 40 
+
+python lhlimitcalc.py -p ./ -i 4 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 4 -w abc -n 40 
+
+python lhlimitcalc.py -p ./ -i 5 -w a -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w b -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w c -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w ab -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w bc -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w ac -n 40 
+python lhlimitcalc.py -p ./ -i 5 -w abc -n 40 

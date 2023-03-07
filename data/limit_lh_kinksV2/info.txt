@@ -1,0 +1,53 @@
+used method:
+
+bisect(implfunc,
+      a=res_best.x[0],
+      b=b,  # previously: b=1e9, maxiter=1000
+      maxiter=100
+      )
+
+here it did not work:
+
+Limit_a_2.out
+Limit_a_6.out
+Limit_a_8.out
+Limit_ab_0.out
+Limit_c_9.out
+
+
+limits with kinks:
+
+a_4
+b_1
+c_0
+c_1
+c_2
+c_4
+c_5
+c_7
+ab_8
+ab_9
+ac_0
+ac_1
+ac_4
+ac_5
+ac_6
+ac_7
+ac_8
+ac_9
+bc_0
+bc_3
+bc_4
+bc_5
+bc_6
+bc_7
+bc_8
+bc_9
+all_0
+all_1
+all_4
+all_5
+all_6
+all_7
+all_8
+all_9

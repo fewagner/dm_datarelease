@@ -1,0 +1,10 @@
+res_best = minimize(nll_combined, 
+             method='Nelder-Mead',
+             x0=x0s, 
+             args=args_,
+             options={'adaptive': True})
+             
+all files good
+
+no kinks :-)
+

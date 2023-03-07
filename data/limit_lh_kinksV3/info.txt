@@ -1,0 +1,45 @@
+res = minimize(nll_combined_sigfixed,
+               method='Nelder-Mead',
+               x0=res_best.x[1:],
+               # x0=x0s[1:],
+               args=args_excl,
+               options={'adaptive': True})
+
+bad files:
+
+limits with kink:
+
+a_4
+a_8
+b_1
+b_5
+c_0
+c_1
+c_2
+c_4
+c_5
+c_6
+c_7
+c_9
+ac_0
+ac_1
+ac_4
+ac_5
+ac_6
+ac_7
+ac_8
+ac_9
+bc_0
+bc_5
+bc_6
+bc_7
+bc_8
+bc_9
+all_0
+all_1
+all_4
+all_5
+all_6
+all_7
+all_8
+all_9
