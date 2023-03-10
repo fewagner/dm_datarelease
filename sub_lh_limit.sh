@@ -1,15 +1,6 @@
 #!/bin/sh
 # execution script for SLURM cluster 
 
-# Calculation times are roughly (min):
-# a 10 
-# b 10 
-# c 20
-# ab 30 
-# bc 60
-# ac 60
-# abc 120
-
 # a b c ab bc ac abc
 for which in a b c ab bc ac abc
 do
@@ -20,7 +11,7 @@ do
     SCRIPT_PATH="/users/felix.wagner/dm_datarelease/lhlimitcalc.py"
     CONTAINER_PATH="/users/felix.wagner/cait_v1_1_0_latest.sif"
     OUTPUT_FILE="/users/felix.wagner/outputs/${JOB_NAME}.out"
-    SBATCH_OPTIONS=" -c 1 --mem=4G --output=${OUTPUT_FILE} --job-name=${JOB_NAME} --time=480"  # time=480
+    SBATCH_OPTIONS=" -c 1 --mem=4G --output=${OUTPUT_FILE} --job-name=${JOB_NAME} --time=150"
     SINGULARITY_OPTIONS=" -c -B /eos/ -H /users/felix.wagner"
     PYTHON_OPTIONS=" -u "
     CMD_ARGUMENTS=" -i ${idx} -n 40 -w ${which} -p /users/felix.wagner/dm_datarelease/"
