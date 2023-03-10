@@ -9,7 +9,7 @@ do
     echo "Submitting job ${which} nmbr ${idx}"
     JOB_NAME="Limit_${which}_${idx}"
     SCRIPT_PATH="/users/felix.wagner/dm_datarelease/lhlimitcalc.py"
-    CONTAINER_PATH="/users/felix.wagner/cait_v1_1_0_latest.sif"
+    CONTAINER_PATH="/users/felix.wagner/mosquitto_latest.sif"
     OUTPUT_FILE="/users/felix.wagner/outputs/${JOB_NAME}.out"
     SBATCH_OPTIONS=" -c 1 --mem=4G --output=${OUTPUT_FILE} --job-name=${JOB_NAME} --time=150"
     SINGULARITY_OPTIONS=" -c -B /eos/ -H /users/felix.wagner"
